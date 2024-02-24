@@ -49,11 +49,18 @@ class Product(models.Model):
         Category, on_delete=models.CASCADE, related_name="products"
     )
     slug = models.SlugField(unique=True, max_length=100, blank=True)
+    image = models.CharField(
+        max_length=255, blank=True, null=True
+    )  # CharField to hold image URL
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)[:100]  # Truncate the slug if necessary
             # self.slug = f"{slug}-id{self.id}"  # Append id to the slug
+
+        if not self.image:
+            self.image = slugify(self.name)  # Set image URL if not provided
+
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -34,6 +34,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "department",
             "category",
             "slug",
+            "image",
         ]
 
 
