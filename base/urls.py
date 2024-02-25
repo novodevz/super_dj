@@ -22,4 +22,5 @@ urlpatterns = [
     path('department/<str:dep_slug>', views.get_dep_prods, name='base-get_dep_prods'),
     path('category/<str:cat_slug>', views.get_cat_prods, name='base-get_cat_prods'),
     path('department/<str:dep_slug>/category/<str:cat_slug>', views.get_prods_by_dep_cat, name='base-get_prods_by_dep_cat'),
+    path('add_prod', views.add_prod, name='base-add_prod'),
 ]

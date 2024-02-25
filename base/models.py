@@ -59,7 +59,7 @@ class Product(models.Model):
             # self.slug = f"{slug}-id{self.id}"  # Append id to the slug
 
         if not self.image:
-            self.image = slugify(self.name)  # Set image URL if not provided
+            self.image = "default.jpg"
 
         super().save(*args, **kwargs)
 

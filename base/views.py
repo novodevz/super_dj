@@ -1,3 +1,5 @@
+import os
+
 from base.serializers import RegistrationSerializer
 from django.contrib.auth.models import User
 from django.shortcuts import render
@@ -154,4 +156,114 @@ def get_prods_by_dep_cat(request, dep_slug, cat_slug):
                 "error": "No products found for the specified department and category slugs"
             },
             status=status.HTTP_404_NOT_FOUND,
+        )
+
+
+import random
+import string
+
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from PIL import Image
+
+
+def random_string(length):
+    characters = string.ascii_lowercase + string.digits
+    return "".join(random.choice(characters) for _ in range(length))
+
+
+def generate_unique_filename(original_filename, k):
+    # Generate a random string of 4 characters
+    random_chars = "".join(random.choices(string.ascii_letters + string.digits, k=k))
+
+    # Split the original filename and get the file extension
+    filename, extension = os.path.splitext(original_filename)
+
+    # Combine the random string with the original filename and extension
+    unique_filename = f"{filename}_{random_chars}{extension}"
+
+    return unique_filename
+
+
+# fake_request_files = {
+#     "image": {
+#         "filename": "example.jpg",
+#         "content_type": "image/jpeg",
+#         "content": b"fake_image_content",  # Bytes representing the image content
+#     },
+#     "document": {
+#         "filename": "example.pdf",
+#         "content_type": "application/pdf",
+#         "content": b"fake_document_content",  # Bytes representing the document content
+#     }
+# }
+
+
+from django.db import IntegrityError
+
+
+@api_view(["POST"])
+def add_prod(request):
+    if request.method == "POST":
+        serializer = ProductSerializer(data=request.data)
+
+        if serializer.is_valid():
+            product_name = serializer.validated_data.get("name")
+
+            # Check if a product with the same name already exists
+            if Product.objects.filter(name=product_name).exists():
+                return Response(
+                    {"error": "Product with the same name already exists."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            print(request.FILES)
+            # Handle image upload
+            if "imageFile" in request.FILES:
+                image_file = request.FILES["imageFile"]
+
+                # Generate a unique filename
+                unique_filename = generate_unique_filename(image_file.name, 5)
+
+                try:
+                    # Save the image using default storage
+                    image_path = default_storage.save(unique_filename, image_file)
+
+                    # Save the product instance with the image field
+                    serializer.save(image=image_path)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                except IntegrityError as e:
+                    # Handle database integrity error
+                    return Response(
+                        {"error": "Product with the same name already exists."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                except Exception as e:
+                    # Handle other potential errors
+                    print("An error occurred:", e)
+                    return Response(
+                        {"error": "An error occurred while saving the product."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+            else:
+                # If no image is provided, save the product instance without the image field
+                try:
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                except Exception as e:
+                    # Handle other potential errors
+                    print("An error occurred:", e)
+                    return Response(
+                        {"error": "An error occurred while saving the product."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    else:
+        return Response(
+            {"error": "Invalid request method"},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
