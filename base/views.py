@@ -217,7 +217,7 @@ def add_prod(request):
                     {"error": "Product with the same name already exists."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            print(request.FILES)
+
             # Handle image upload
             if "imageFile" in request.FILES:
                 image_file = request.FILES["imageFile"]
@@ -264,6 +264,6 @@ def add_prod(request):
 
     else:
         return Response(
-            {"error": "Invalid request method"},
+            {"error": "Invalid request method "},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
