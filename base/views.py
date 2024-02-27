@@ -167,40 +167,25 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from PIL import Image
 
-
-def random_string(length):
-    characters = string.ascii_lowercase + string.digits
-    return "".join(random.choice(characters) for _ in range(length))
+# not in use
+# def random_string(length):
+#     characters = string.ascii_lowercase + string.digits
+#     return "".join(random.choice(characters) for _ in range(length))
 
 
 def generate_unique_filename(original_filename, k):
     # Generate a random string of 4 characters
     random_chars = "".join(random.choices(string.ascii_letters + string.digits, k=k))
-
     # Split the original filename and get the file extension
     filename, extension = os.path.splitext(original_filename)
-
     # Combine the random string with the original filename and extension
-    unique_filename = f"{filename}_{random_chars}{extension}"
+    unique_filename = f"{filename}_{random_chars}.{extension}"
 
     return unique_filename
 
 
-# fake_request_files = {
-#     "image": {
-#         "filename": "example.jpg",
-#         "content_type": "image/jpeg",
-#         "content": b"fake_image_content",  # Bytes representing the image content
-#     },
-#     "document": {
-#         "filename": "example.pdf",
-#         "content_type": "application/pdf",
-#         "content": b"fake_document_content",  # Bytes representing the document content
-#     }
-# }
-
-
 from django.db import IntegrityError
+from django.utils.text import slugify
 
 
 @api_view(["POST"])
@@ -221,13 +206,20 @@ def add_prod(request):
             # Handle image upload
             if "imageFile" in request.FILES:
                 image_file = request.FILES["imageFile"]
+                image_file_name = image_file.name
+                file_extension = image_file_name.split(".")[-1]
 
                 # Generate a unique filename
-                unique_filename = generate_unique_filename(image_file.name, 5)
+                slugified_filename = slugify(product_name) + "." + file_extension
+                # not needed, since the file name is set by the prod name, which is unique
+                # if Product.objects.filter(image=slugified_filename).exists():
+                #     # If a product with the same image name exists, generate a unique filename
+                #     unique_filename = generate_unique_filename(slugified_filename, 5)
+                #     slugified_filename = unique_filename
 
                 try:
                     # Save the image using default storage
-                    image_path = default_storage.save(unique_filename, image_file)
+                    image_path = default_storage.save(slugified_filename, image_file)
 
                     # Save the product instance with the image field
                     serializer.save(image=image_path)
@@ -267,3 +259,100 @@ def add_prod(request):
             {"error": "Invalid request method "},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
+
+
+# returns deps and cats info including thier prods
+# @api_view(["GET"])
+# def get_dep_cat_info(request):
+#     departments = Department.objects.all()
+#     categories = Category.objects.all()
+
+#     department_data = DepartmentSerializer(departments, many=True).data
+#     category_data = CategorySerializer(categories, many=True).data
+
+#     data = {"departments": department_data, "categories": category_data}
+
+#     return Response(data)
+
+from icecream import ic
+
+
+@api_view(["GET"])
+def get_dep_cat_info(request):
+    departments = Department.objects.all()
+    categories = Category.objects.all()
+
+    department_data = []
+    for department in departments:
+        related_categories = department.categories.all()
+        category_list = [
+            {
+                "id": category.id,
+                "name": category.name,
+                "description": category.description,
+                "slug": category.slug,
+            }
+            for category in related_categories
+        ]
+
+        related_products = department.products.all()
+        product_list = [
+            {
+                "id": product.id,
+                "name": product.name,
+                "description": product.description,
+                "price": product.price,
+                "slug": product.slug,
+                "image": product.image,
+            }
+            for product in related_products
+        ]
+
+        department_info = {
+            "id": department.id,
+            "name": department.name,
+            "description": department.description,
+            "slug": department.slug,
+            "categories": category_list,
+            "products": product_list,
+        }
+        department_data.append(department_info)
+
+    category_data = []
+    for category in categories:
+        related_departments = category.department
+        department_list = [
+            {
+                "id": related_departments.id,
+                "name": related_departments.name,
+                "description": related_departments.description,
+                "slug": related_departments.slug,
+            }
+        ]
+
+        related_products = category.products.all()
+        product_list = [
+            {
+                "id": product.id,
+                "name": product.name,
+                "description": product.description,
+                "price": product.price,
+                "slug": product.slug,
+                "image": product.image,
+            }
+            for product in related_products
+        ]
+
+        category_info = {
+            "id": category.id,
+            "name": category.name,
+            "description": category.description,
+            "slug": category.slug,
+            "departments": department_list,
+            "products": product_list,
+        }
+        category_data.append(category_info)
+
+    data = {"departments": department_data, "categories": category_data}
+
+    return Response(data)

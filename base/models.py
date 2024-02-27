@@ -28,6 +28,9 @@ class Category(models.Model):
         unique=True,
         max_length=100,
     )
+    department = models.ForeignKey(
+        Department, on_delete=models.CASCADE, related_name="categories"
+    )
 
     # def save(self, *args, **kwargs):
     #     if not self.slug:
