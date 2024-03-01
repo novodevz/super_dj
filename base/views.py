@@ -356,3 +356,71 @@ def get_dep_cat_info(request):
     data = {"departments": department_data, "categories": category_data}
 
     return Response(data)
+
+
+@api_view(["DELETE"])
+def del_prod(request, product_id):
+    if request.method == "DELETE":
+        try:
+            # Query the product by ID
+            product = Product.objects.get(id=product_id)
+            # Serialize the deleted product
+            serialized_product = ProductSerializer(product)
+            ic(serialized_product.data)
+            # Delete the product
+            product.delete()
+            ic(serialized_product.data)
+            return Response(serialized_product.data, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            # Handle the case where the product does not exist
+            return Response(
+                {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            # Handle other potential errors
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    else:
+        # Return a method not allowed response for invalid request methods
+        return Response(
+            {"error": "Invalid request method."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+
+@api_view(["PUT"])
+def upd_prod(request, product_id):
+    if request.method == "PUT":
+        ic(request.data)
+        try:
+            # Retrieve the product instance by ID
+            product = Product.objects.get(id=product_id)
+            # Serialize the product instance with the data from the request payload
+            serializer = ProductSerializer(product, data=request.data, partial=True)
+            if serializer.is_valid():
+                # Save the updated product
+                serializer.save()
+                # Return the updated product data
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                # Return validation error response if serializer is not valid
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Product.DoesNotExist:
+            # Handle the case where the product does not exist
+            return Response(
+                {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            # Handle other potential errors
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    else:
+        # Return a method not allowed response for invalid request methods
+        return Response(
+            {"error": "Invalid request method."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
