@@ -367,10 +367,8 @@ def del_prod(request, product_id):
             product = Product.objects.get(id=product_id)
             # Serialize the deleted product
             serialized_product = ProductSerializer(product)
-            ic(serialized_product.data)
             # Delete the product
             product.delete()
-            ic(serialized_product.data)
             return Response(serialized_product.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             # Handle the case where the product does not exist
@@ -394,7 +392,6 @@ def del_prod(request, product_id):
 @api_view(["PUT"])
 def upd_prod(request, product_id):
     if request.method == "PUT":
-        ic(request.data)
         try:
             # Retrieve the product instance by ID
             product = Product.objects.get(id=product_id)
