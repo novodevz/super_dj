@@ -422,3 +422,49 @@ def upd_prod(request, product_id):
             {"error": "Invalid request method."},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
+
+
+from .models import Order, OrderItem
+from .serializers import OrderItemSerializer, OrderSerializer
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_order(request):
+    if request.method == "POST":
+        # Update the order data to include the user
+        order_data = request.data.get("order")
+        order_items_data = request.data.get("order_items")
+
+        # Set the user field of the order data to the authenticated user
+        order_data["user"] = request.user.id  # Change to "user" instead of "user_id"
+
+        # Now create the order with the updated data
+        order_serializer = OrderSerializer(data=order_data)
+        if order_serializer.is_valid():
+            order_instance = order_serializer.save()
+
+            # Create order items
+            for item_data in order_items_data:
+                item_data["order"] = order_instance.id
+                ic("****************************************")
+                ic(item_data)
+                ic("****************************************")
+                order_item_serializer = OrderItemSerializer(data=item_data)
+                if order_item_serializer.is_valid():
+                    order_item_instance = order_item_serializer.save()
+                else:
+                    # Rollback the order creation if any order item fails
+                    order_instance.delete()
+                    return Response(
+                        order_item_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(order_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(
+            {"error": "Invalid request method."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )

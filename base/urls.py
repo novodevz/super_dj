@@ -26,4 +26,5 @@ urlpatterns = [
     path('get_dep_cat_info', views.get_dep_cat_info, name='base-get_dep_cat_info'),
     path('del_prod/<int:product_id>/', views.del_prod, name='base-del_prod'),
     path('upd_prod/<int:product_id>/', views.upd_prod, name='base-upd_prod'),
+    path('create_order/', views.create_order, name='base-create_order')
 ]   
