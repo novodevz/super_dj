@@ -120,7 +120,7 @@ WSGI_APPLICATION = "proj.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if not DEBUG:
+if DEBUG == "False":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -128,13 +128,16 @@ if not DEBUG:
         }
     }
 else:
+    DATABASE_HOST = "localhost"
+    if os.getenv("DOCKER") == "True":
+        DATABASE_HOST = os.getenv("DB_HOST")
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": "superdb",
             "USER": os.getenv("DB_USER"),
             "PASSWORD": os.getenv("DB_PASSWORD"),
-            "HOST": os.getenv("DB_HOST"),
+            "HOST": DATABASE_HOST,
             "PORT": os.getenv("DB_PORT"),
         }
     }
