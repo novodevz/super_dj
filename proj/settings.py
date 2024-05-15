@@ -120,27 +120,33 @@ WSGI_APPLICATION = "proj.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if DEBUG == "False":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+if os.getenv("DOCKER") == "True":
+    DB_HOST = os.getenv("DB_HOST")
 else:
-    DATABASE_HOST = "localhost"
-    if os.getenv("DOCKER") == "True":
-        DATABASE_HOST = os.getenv("DB_HOST")
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "superdb",
-            "USER": os.getenv("DB_USER"),
-            "PASSWORD": os.getenv("DB_PASSWORD"),
-            "HOST": DATABASE_HOST,
-            "PORT": os.getenv("DB_PORT"),
-        }
+    DB_HOST = "localhost"
+
+PGDB = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "superdb",
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": DB_HOST,
+        "PORT": os.getenv("DB_PORT"),
     }
+}
+
+SQLITEDB = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+if DEBUG == "True":
+    DATABASES = SQLITEDB
+else:
+    DATABASES = PGDB
 
 
 # Password validation
