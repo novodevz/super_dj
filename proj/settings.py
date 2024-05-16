@@ -128,7 +128,7 @@ else:
 PGDB = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "superdb",
+        "NAME": os.getenv("DB_NAME"),
         "USER": os.getenv("DB_USER"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": DB_HOST,
@@ -143,11 +143,10 @@ SQLITEDB = {
     }
 }
 
-if DEBUG == "True":
+if DEBUG == "True" and os.getenv("PG") == "False":
     DATABASES = SQLITEDB
 else:
     DATABASES = PGDB
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
