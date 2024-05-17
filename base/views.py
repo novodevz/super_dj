@@ -367,6 +367,13 @@ def del_prod(request, product_id):
             product = Product.objects.get(id=product_id)
             # Serialize the deleted product
             serialized_product = ProductSerializer(product)
+
+            # Check if the product has an existing image and delete it
+            if product.image:
+                old_image_path = product.image
+                if default_storage.exists(old_image_path):
+                    default_storage.delete(old_image_path)
+
             # Delete the product
             product.delete()
             return Response(serialized_product.data, status=status.HTTP_200_OK)
@@ -398,8 +405,33 @@ def upd_prod(request, product_id):
             # Serialize the product instance with the data from the request payload
             serializer = ProductSerializer(product, data=request.data, partial=True)
             if serializer.is_valid():
+                # Handle image upload
+                if "imageFile" in request.FILES:
+                    image_file = request.FILES["imageFile"]
+                    image_file_name = image_file.name
+                    file_extension = image_file_name.split(".")[-1]
+
+                    # Generate a unique filename
+                    slugified_filename = slugify(product.name) + "." + file_extension
+
+                    # Check if the product has an existing image and delete it
+                    if product.image:
+                        old_image_path = product.image
+                        if default_storage.exists(old_image_path):
+                            default_storage.delete(old_image_path)
+
+                    # Save the new image using default storage
+                    image_path = default_storage.save(slugified_filename, image_file)
+
+                    # Save the product instance with the new image field
+                    serializer.save(image=image_path)
+                else:
+                    # Save the product instance without changes to the image
+                    serializer.save()
+
                 # Save the updated product
-                serializer.save()
+                # serializer.save()
+                ic(serializer.data)
                 # Return the updated product data
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
