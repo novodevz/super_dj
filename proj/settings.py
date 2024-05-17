@@ -120,11 +120,9 @@ WSGI_APPLICATION = "proj.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if DEBUG == "True":
-    DB_HOST = "localhost"
-else:
+DB_HOST = "localhost"
+if os.getenv("DOCKER") == "True":
     DB_HOST = os.getenv("DB_HOST")
-
 
 PGDB = {
     "default": {
@@ -144,10 +142,9 @@ SQLITEDB = {
     }
 }
 
+DATABASES = SQLITEDB
 if os.getenv("PG") == "True":
     DATABASES = PGDB
-else:
-    DATABASES = SQLITEDB
 
 print(DATABASES)
 
