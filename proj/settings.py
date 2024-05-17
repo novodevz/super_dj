@@ -120,10 +120,11 @@ WSGI_APPLICATION = "proj.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if os.getenv("DOCKER") == "True":
-    DB_HOST = os.getenv("DB_HOST")
-else:
+if DEBUG == "True":
     DB_HOST = "localhost"
+else:
+    DB_HOST = os.getenv("DB_HOST")
+
 
 PGDB = {
     "default": {
@@ -143,10 +144,12 @@ SQLITEDB = {
     }
 }
 
-if DEBUG == "True" and os.getenv("PG") == "False":
-    DATABASES = SQLITEDB
-else:
+if os.getenv("PG") == "True":
     DATABASES = PGDB
+else:
+    DATABASES = SQLITEDB
+
+print(DATABASES)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
